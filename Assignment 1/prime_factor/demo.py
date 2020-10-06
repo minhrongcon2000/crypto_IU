@@ -4,6 +4,10 @@ from fractions import gcd
 from random import randint
 
 
+def isNotValidInput(n):
+    return not n.isdecimal() or int(n) <= 0
+
+
 def brent(N):
     # brent returns a divisor not guaranteed to be prime, returns n if n prime
     if N % 2 == 0:
@@ -33,6 +37,9 @@ def brent(N):
 
 
 def factorize(n1):
+    if isNotValidInput(n1):
+        raise Exception("Illegal input!")
+    n1 = int(n1)
     if n1 <= 0:
         return []
     if n1 == 1:
@@ -75,7 +82,7 @@ def main():
     if len(argv) == 2:
         n = int(argv[1])
     else:
-        n = int(eval(input(" Integer to factorize? ")))
+        n = input(" Integer to factorize? ")
     li = factorize(n)
     print(n, "= ", li)
 
