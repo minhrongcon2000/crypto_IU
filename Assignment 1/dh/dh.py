@@ -45,29 +45,24 @@ shared_key = {
 
 
 class User(object):
-    secret_bit = 128
-
-    def __init__(self, userid, username, modulus, generator):
+    def __init__(self, username, private_key):
         super().__init__()
-        self.__userid = userid
         self.__username = username
-        self.__private_key = secrets.randbits(User.secret_bit)
-        self.__calculatePublicKey(modulus, generator)
+        self.__private_key = private_key
 
         # for saving user's messages
         self.__receivedMessage = []
         self.__sendMessage = []
 
     def __repr__(self):
-        return "User(userid={}, username={}, private_key={}, public_key={})".format(self.__userid, self.__username, self.__private_key, self.__public_key)
+        return "User(username={}, private_key={}, public_key={})".format(self.__username, self.__private_key, self.__public_key)
 
     def send(self, user, content):
         message = Message(self, user, content)
         user.__receivedMessage.append(message)
         self.__sendMessage.append(message)
-        dh.createMessage(message)
 
-    def __calculatePublicKey(self, modulus, generator):
+    def createPublicKey(self, modulus, generator):
         self.__public_key = pow(generator, self.__private_key, modulus)
 
     @property
@@ -111,6 +106,8 @@ class Message(object):
 
 
 class DiffieHellman(object):
+    secret_bit = 128
+
     def __init__(self, group=14):
         super().__init__()
         self.__group = group
@@ -119,14 +116,19 @@ class DiffieHellman(object):
         self.__users = []
 
     def createUser(self):
-        alice = User("1", "Alice", self.__modulus, self.__generator)
-        bob = User("2", "Bob", self.__modulus, self.__generator)
+        alice = User("Alice", secrets.randbits(DiffieHellman.secret_bit))
+        alice.createPublicKey(self.__modulus, self.__generator)
+
+        bob = User("Bob", secrets.randbits(DiffieHellman.secret_bit))
+        bob.createPublicKey(self.__modulus, self.__generator)
+
         self.__users.append(alice)
         self.__users.append(bob)
         return alice, bob
 
-    def createMessage(self, message):
-        self.__messages.append(message)
+    def createMessageFromAToB(self, a, b):
+        a.send(b, a.public_key)
+        self.__messages.append(Message(a, b, a.public_key))
 
     def __generateSharedKey(self):
         return shared_key[self.__group]["p"], shared_key[self.__group]["g"]
@@ -146,16 +148,9 @@ class DiffieHellman(object):
 
 dh = DiffieHellman()
 alice, bob = dh.createUser()
-print("Alice sends Bob: {}".format(alice.public_key))
-alice.send(bob, alice.public_key)
-print()
+dh.createMessageFromAToB(alice, bob)
+dh.createMessageFromAToB(bob, alice)
 
-print("Bob sends Alice: {}".format(bob.public_key))
-bob.send(alice, bob.public_key)
-print()
-
-print("Check if shared key of both sides...")
-messages = dh.messages
-content = list(map(lambda message: message.content, messages))
-print(pow(content[0], bob.private_key, dh.modulus) ==
-      pow(content[1], alice.private_key, dh.modulus))
+message_content = list(map(lambda message: message.content, dh.messages))
+print(pow(message_content[0], bob.private_key, dh.modulus) == pow(
+    message_content[1], alice.private_key, dh.modulus))
