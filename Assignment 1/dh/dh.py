@@ -5,7 +5,7 @@ import secrets
 # Therefore, we use pre-computed generator and modulus from https://tools.ietf.org/html/rfc3526.
 # The larger the group, the more computational resource and time it takes to calculate secret keys
 # Note: group 5 has been cracked.
-shared_key = {
+SHARED_KEY = {
     # 1536-bit MODP Group
     5: {
         "p": 0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD129024E088A67CC74020BBEA63B139B22514A08798E3404DDEF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245E485B576625E7EC6F44C42E9A637ED6B0BFF5CB6F406B7EDEE386BFB5A899FA5AE9F24117C4B1FE649286651ECE45B3DC2007CB8A163BF0598DA48361C55D39A69163FA8FD24CF5F83655D23DCA3AD961C62F356208552BB9ED529077096966D670C354E4ABC9804F1746C08CA237327FFFFFFFFFFFFFFFF,
@@ -55,14 +55,13 @@ class User(object):
         self.__sendMessage = []
 
     def __repr__(self):
-        return "User(username={}, private_key={}, public_key={})".format(self.__username, self.__private_key, self.__public_key)
+        return "User(username={}, private_key={})".format(self.__username, self.__private_key)
 
-    def send(self, user, content):
-        message = Message(self, user, content)
+    def send(self, user, message):
         user.__receivedMessage.append(message)
         self.__sendMessage.append(message)
 
-    def createPublicKey(self, modulus, generator):
+    def generatePublicKey(self, generator, modulus):
         self.__public_key = pow(generator, self.__private_key, modulus)
 
     @property
@@ -80,6 +79,69 @@ class User(object):
     @property
     def receivedMessage(self):
         return self.__receivedMessage
+
+    @property
+    def username(self):
+        return self.__username
+
+
+class DHSystem(object):
+    def __init__(self):
+        self.__users = {}
+        self.__messages = []
+        self.__modulus = None
+        self.__generator = None
+
+    def addUsers(self, username, private_key):
+        self.__users[username] = User(username, private_key)
+        self.__users[username].generatePublicKey(
+            self.__generator, self.__modulus)
+
+    def createMessage(self, sender, receiver, content):
+        message = Message(
+            self.__users[sender], self.__users[receiver], content)
+        self.__messages.append(message)
+        self.__users[sender].send(self.__users[receiver], message)
+
+    def getPublicKey(self, username):
+        return self.__users[username].public_key
+
+    def getSecretKey(self):
+        if len(self.__users) == 0:
+            raise Exception("No user has been created!")
+        if len(self.__messages) == 0:
+            raise Exception("No message has been sent!")
+
+        secret_keys_both_side = []
+        for (username, props) in self.__users.items():
+            secret_keys_both_side.append(pow(
+                self.__users[username].receivedMessage[0].content, self.__users[username].private_key, self.__modulus))
+        assert secret_keys_both_side[0] == secret_keys_both_side[1]
+        return secret_keys_both_side[0]
+
+    @property
+    def users(self):
+        return self.__users
+
+    @property
+    def messages(self):
+        return self.__messages
+
+    @property
+    def generator(self):
+        return self.__generator
+
+    @property
+    def modulus(self):
+        return self.__modulus
+
+    @generator.setter
+    def generator(self, generator):
+        self.__generator = generator
+
+    @modulus.setter
+    def modulus(self, modulus):
+        self.__modulus = modulus
 
 
 class Message(object):
@@ -105,52 +167,52 @@ class Message(object):
         return self.__content
 
 
-class DiffieHellman(object):
-    secret_bit = 128
+# class DiffieHellman(object):
+#     secret_bit = 128
 
-    def __init__(self, group=14):
-        super().__init__()
-        self.__group = group
-        self.__modulus, self.__generator = self.__generateSharedKey()
-        self.__messages = []
-        self.__users = []
+#     def __init__(self, group=14):
+#         super().__init__()
+#         self.__group = group
+#         self.__modulus, self.__generator = self.__generateSharedKey()
+#         self.__messages = []
+#         self.__users = []
 
-    def createUser(self):
-        alice = User("Alice", secrets.randbits(DiffieHellman.secret_bit))
-        alice.createPublicKey(self.__modulus, self.__generator)
+#     def createUser(self):
+#         alice = User("Alice", secrets.randbits(DiffieHellman.secret_bit))
+#         alice.createPublicKey(self.__modulus, self.__generator)
 
-        bob = User("Bob", secrets.randbits(DiffieHellman.secret_bit))
-        bob.createPublicKey(self.__modulus, self.__generator)
+#         bob = User("Bob", secrets.randbits(DiffieHellman.secret_bit))
+#         bob.createPublicKey(self.__modulus, self.__generator)
 
-        self.__users.append(alice)
-        self.__users.append(bob)
-        return alice, bob
+#         self.__users.append(alice)
+#         self.__users.append(bob)
+#         return alice, bob
 
-    def createMessageFromAToB(self, a, b):
-        a.send(b, a.public_key)
-        self.__messages.append(Message(a, b, a.public_key))
+#     def createMessageFromAToB(self, a, b):
+#         a.send(b, a.public_key)
+#         self.__messages.append(Message(a, b, a.public_key))
 
-    def __generateSharedKey(self):
-        return shared_key[self.__group]["p"], shared_key[self.__group]["g"]
+#     def __generateSharedKey(self):
+#         return SHARED_KEY[self.__group]["p"], SHARED_KEY[self.__group]["g"]
 
-    @property
-    def messages(self):
-        return self.__messages
+#     @property
+#     def messages(self):
+#         return self.__messages
 
-    @property
-    def modulus(self):
-        return self.__modulus
+#     @property
+#     def modulus(self):
+#         return self.__modulus
 
-    @property
-    def generator(self):
-        return self.__generator
+#     @property
+#     def generator(self):
+#         return self.__generator
 
 
-dh = DiffieHellman()
-alice, bob = dh.createUser()
-dh.createMessageFromAToB(alice, bob)
-dh.createMessageFromAToB(bob, alice)
+# dh = DiffieHellman()
+# alice, bob = dh.createUser()
+# dh.createMessageFromAToB(alice, bob)
+# dh.createMessageFromAToB(bob, alice)
 
-message_content = list(map(lambda message: message.content, dh.messages))
-print(pow(message_content[0], bob.private_key, dh.modulus) == pow(
-    message_content[1], alice.private_key, dh.modulus))
+# message_content = list(map(lambda message: message.content, dh.messages))
+# print(pow(message_content[0], bob.private_key, dh.modulus) == pow(
+#     message_content[1], alice.private_key, dh.modulus))
