@@ -49,9 +49,11 @@ def factorize(n1):
     p = 0
     mx = 1000000
     while n % 2 == 0:
+        print(2)
         b.append(2)
         n //= 2
     while n % 3 == 0:
+        print(3)
         b.append(3)
         n //= 3
     i = 5
@@ -59,6 +61,7 @@ def factorize(n1):
     # use trial division for factors below 1M
     while i <= mx:
         while n % i == 0:
+            print(i)
             b.append(i)
             n //= i
         i += inc
@@ -70,9 +73,11 @@ def factorize(n1):
         while p1 != p:
             p = p1
             p1 = brent(p)
+        print(p1)
         b.append(p1)
         n //= p1
     if n != 1:
+        print(n)
         b.append(n)
     b.sort()
     return b
