@@ -74,7 +74,7 @@ def factorize(n1):
         n //= p1
     if n != 1:
         b.append(n)
-    # b.sort()
+    b.sort()
     return b
 
 

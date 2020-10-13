@@ -94,8 +94,9 @@ class ExtendedCaesarEncryptor(CaesarEncryptor):
 
 
 if __name__ == "__main__":
-    encryptor = ExtendedCaesarEncryptor(step=2)
+    step = int(input("Input your caesar's keys: "))
+    text = input("Input your message: ")
+    encryptor = ExtendedCaesarEncryptor(step=step)
     # # comment out the following line to try orginal caesar cipher
     # encryptor = BasicCaesarEncryptor(step=2)
-    print(encryptor.encrypt("h3ll0"))
-    print(encryptor.decrypt(encryptor.encrypt("h3ll0")))
+    print("Your encrypted message: " + encryptor.encrypt(text))

@@ -265,6 +265,10 @@ class MainApp(tk.Frame):
             self.management_sys.messages[-1].sender.username,
             self.management_sys.messages[-1].receiver.username, self.management_sys.messages[-1].content
         ))
+        self.__insertText("\n{}'s shared key: {}'s public key^{}'s private key = {}".format(
+            self.management_sys.messages[0].receiver.username, self.management_sys.messages[0].sender.username, self.management_sys.messages[0].receiver.username, pow(self.management_sys.messages[0].content, self.management_sys.users["Bob"].private_key, self.management_sys.modulus)))
+        self.__insertText("\n{}'s shared key: {}'s public key^{}'s private key = {}".format(
+            self.management_sys.messages[1].receiver.username, self.management_sys.messages[1].sender.username, self.management_sys.messages[1].receiver.username, pow(self.management_sys.messages[1].content, self.management_sys.users["Alice"].private_key, self.management_sys.modulus)))
         self.__insertField(self.secret_key_field.secret_entry,
                            self.management_sys.getSecretKey())
         self.global_content.modulus_entry.configure(state='normal')
