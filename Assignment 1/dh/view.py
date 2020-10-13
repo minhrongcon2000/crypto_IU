@@ -102,7 +102,7 @@ class UserBox(tk.Frame):
 
     def onButtonPressed(self):
         user_input_bits = tkinter.simpledialog.askinteger(
-            title="Test", prompt="What is your number?")
+            title="Test", prompt="Input the bits")
         self.private_entry.delete(0, tk.END)
         self.private_entry.insert(0, secrets.randbits(user_input_bits))
 
@@ -267,6 +267,11 @@ class MainApp(tk.Frame):
         ))
         self.__insertField(self.secret_key_field.secret_entry,
                            self.management_sys.getSecretKey())
+        self.global_content.modulus_entry.configure(state='normal')
+        self.global_content.generator_entry.configure(state='normal')
+        self.user_frame.alice_box.public_entry.configure(state='normal')
+        self.user_frame.bob_box.public_entry.configure(state='normal')
+        self.secret_key_field.secret_entry.configure(state='normal')
 
 
 app = tk.Tk()
