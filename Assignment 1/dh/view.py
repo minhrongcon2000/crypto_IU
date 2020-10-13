@@ -215,7 +215,7 @@ class MainApp(tk.Frame):
 
         if not isAlicePrivateKeysGenerated:
             tk.messagebox.showerror(
-                title="Invalid Alice's keys", message="User hasn't generated Alice's keys yet!")
+                title="Invalid Alice's keys", message="User hasn't generated Alice's keys yet! or Invalid input!")
             return
 
         isBobPrivateKeysGenerated = self.__isValidField(
@@ -223,7 +223,7 @@ class MainApp(tk.Frame):
 
         if not isBobPrivateKeysGenerated:
             tk.messagebox.showerror(
-                title="Invalid Alice's keys", message="User hasn't generated Bob's keys yet!")
+                title="Invalid Alice's keys", message="User hasn't generated Bob's keys yet! or Invalid input!")
             return
 
         self.management_sys.addUsers(
